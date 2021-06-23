@@ -401,7 +401,7 @@ namespace :aws do
     begin
       raise NameError if !S3_BUCKET_NAME
       system("aws s3 sync #{OUTPUT_TSV_DIR}/ s3://#{S3_BUCKET_NAME} --include \"*tsv\" --include \"update.txt\"")
-    rescue
+    rescue NameError
       STDERR.puts("ERROR: missing S3 bucket name: use `export S3_BUCKET_NAME=your_bucket_name`")
       exit 1
     end
