@@ -13,7 +13,7 @@ TTL_FILES = CFG_FILES.pathmap("%-1d").sub(/^/, OUTPUT_TTL_DIR).sub(/$/, '.ttl')
 
 # For update procedure on AWS
 UPDATE_TXT     = File.join(OUTPUT_TSV_DIR, "update.txt")
-S3_BUCKET_NAME = "togoid-tsv-testing"
+S3_BUCKET_NAME = ENV['S3_BUCKET_NAME']
 
 desc "Default task"
 task :default => :convert
@@ -398,7 +398,7 @@ namespace :aws do
 
   desc "Upload TSV files to AWS S3"
   task :upload_s3 => UPDATE_TXT do
-    system("aws --profile cli-admin@togoid s3 sync #{OUTPUT_TSV_DIR}/ s3://#{S3_BUCKET_NAME} --include \"*tsv\" --include \"update.txt\"")
+    system("aws s3 sync #{OUTPUT_TSV_DIR}/ s3://#{S3_BUCKET_NAME} --include \"*tsv\" --include \"update.txt\"")
   end
 end
 
