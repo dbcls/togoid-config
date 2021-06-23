@@ -392,7 +392,7 @@ namespace :aws do
 
   file UPDATE_TXT do
     open(UPDATE_TXT, 'w') do |file|
-      file.puts(FileList["#{OUTPUT_TSV_DIR}/*tsv"].pathmap("%-1d"))
+      file.puts(FileList["#{OUTPUT_TSV_DIR}/*tsv"].pathmap("%f"))
     end
   end
 
