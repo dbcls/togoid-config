@@ -391,9 +391,9 @@ namespace :aws do
   task :update => [UPDATE_TXT, :upload_s3]
 
   file UPDATE_TXT do
-    open(UPDATE_TXT, 'w') do |file|
-      file.puts(FileList["#{OUTPUT_TSV_DIR}/*tsv"].pathmap("%f"))
-    end
+    sync_dryrun_stdout = `aws s3 sync --dryrun #{OUTPUT_TSV_DIR}/ s3://#{S3_BUCKET_NAME} --include \"*tsv\"`
+    update_files = sync_dryrun_stdout.split("\n").map{|line| File.basename(l.split("\s+").last) }
+    open(UPDATE_TXT, 'w'){|f| f.puts(update_files) }
   end
 
   desc "Upload TSV files to AWS S3"
