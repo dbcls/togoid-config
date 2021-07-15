@@ -11,6 +11,10 @@ CFG_FILES = FileList["config/*/config.yaml"]
 TSV_FILES = CFG_FILES.pathmap("%-1d").sub(/^/, OUTPUT_TSV_DIR).sub(/$/, '.tsv')
 TTL_FILES = CFG_FILES.pathmap("%-1d").sub(/^/, OUTPUT_TTL_DIR).sub(/$/, '.ttl')
 
+# For update procedure on AWS
+UPDATE_TXT     = File.join(OUTPUT_TSV_DIR, "update.txt")
+S3_BUCKET_NAME = ENV['S3_BUCKET_NAME']
+
 desc "Default task"
 task :default => :convert
 desc "Update all TSV files"
@@ -381,9 +385,31 @@ namespace :prepare do
   end
 end
 
+# Upload task
+namespace :aws do
+  desc "Create update.txt and upload TSV files to AWS S3"
+  task :update => [UPDATE_TXT, :upload_s3]
+
+  file UPDATE_TXT do
+    sync_dryrun_stdout = `aws s3 sync --dryrun #{OUTPUT_TSV_DIR}/ s3://#{S3_BUCKET_NAME} --include \"*tsv\"`
+    update_files = sync_dryrun_stdout.split("\n").map{|line| File.basename(l.split("\s+").last) }
+    open(UPDATE_TXT, 'w'){|f| f.puts(update_files) }
+  end
+
+  desc "Upload TSV files to AWS S3"
+  task :upload_s3 => UPDATE_TXT do
+    begin
+      raise NameError if !S3_BUCKET_NAME
+      system("aws s3 sync #{OUTPUT_TSV_DIR}/ s3://#{S3_BUCKET_NAME} --include \"*tsv\" --include \"update.txt\"")
+    rescue NameError
+      STDERR.puts("ERROR: missing S3 bucket name: use `export S3_BUCKET_NAME=your_bucket_name`")
+      exit 1
+    end
+  end
+end
+
 task :test do
   p CFG_FILES
   p TSV_FILES
   p TTL_FILES
 end
-
